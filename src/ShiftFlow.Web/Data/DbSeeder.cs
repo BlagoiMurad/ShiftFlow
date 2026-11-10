@@ -7,10 +7,14 @@ using ShiftFlow.Services.Common;
 
 namespace ShiftFlow.Web.Data;
 
-/// <summary>Прилага миграциите и добавя демонстрационни данни при първо стартиране.</summary>
+/// <summary>
+/// Прилага миграциите и създава ролите. Демонстрационните данни (с известни пароли)
+/// се добавят само в среда Development. В друга среда се създава само администратор
+/// с имейл и парола от настройките Seed:AdminEmail и Seed:AdminPassword.
+/// </summary>
 public static class DbSeeder
 {
-    public static async Task SeedAsync(IServiceProvider services)
+    public static async Task SeedAsync(IServiceProvider services, bool includeDemoData, IConfiguration configuration)
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -24,6 +28,24 @@ public static class DbSeeder
                 await roles.CreateAsync(new IdentityRole(role));
 
         if (await db.Users.AnyAsync()) return;
+
+        if (!includeDemoData)
+        {
+            var adminEmail = configuration["Seed:AdminEmail"];
+            var adminPassword = configuration["Seed:AdminPassword"];
+            if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminPassword))
+                return;
+            var admin = new Employee
+            {
+                UserName = adminEmail, Email = adminEmail, EmailConfirmed = true,
+                FirstName = "Системен", LastName = "Администратор"
+            };
+            var created = await users.CreateAsync(admin, adminPassword);
+            if (!created.Succeeded)
+                throw new InvalidOperationException(string.Join(" ", created.Errors.Select(e => e.Description)));
+            await users.AddToRoleAsync(admin, Roles.Admin);
+            return;
+        }
 
         var store = new Department { Name = "Магазин Център", Description = "Търговска зала и каси", MinStaffPerShift = 2 };
         var warehouse = new Department { Name = "Склад", Description = "Приемане и подреждане на стока", MinStaffPerShift = 1 };
@@ -58,7 +80,8 @@ public static class DbSeeder
         var georgi = await AddUser("georgi@shiftflow.bg", "Георги", "Димитров", "Employee123", Roles.Employee, warehouse, stocker);
         var elena = await AddUser("elena@shiftflow.bg", "Елена", "Стоянова", "Employee123", Roles.Employee, warehouse, stocker);
 
-        // Смени за текущата и следващата седмица (пон–пет): сутрешна 07–15 и следобедна 15–23, редуват се.
+        // Смени за текущата и следващата седмица (пон–пет): сутрешна 07–15 и следобедна 15–23.
+        // Редуват се по седмици, а не по дни, за да има поне 11 часа почивка между смените.
         var monday = WeekStart(DateTime.Today);
         var pairs = new[] { (ivan, maria, store), (georgi, elena, warehouse) };
         for (int day = 0; day < 12; day++)
@@ -67,7 +90,7 @@ public static class DbSeeder
             if (date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday) continue;
             foreach (var (a, b, dep) in pairs)
             {
-                var (morning, evening) = day % 2 == 0 ? (a, b) : (b, a);
+                var (morning, evening) = (day / 7) % 2 == 0 ? (a, b) : (b, a);
                 db.Shifts.Add(NewShift(morning, dep, date.AddHours(7), date.AddHours(15)));
                 db.Shifts.Add(NewShift(evening, dep, date.AddHours(15), date.AddHours(23)));
             }

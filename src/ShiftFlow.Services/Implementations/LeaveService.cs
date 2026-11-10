@@ -39,6 +39,17 @@ public class LeaveService : ILeaveService
         return leaves.Sum(l => l.Days);
     }
 
+    /// <summary>Платени дни за годината, които са одобрени или чакат одобрение (запазени).</summary>
+    private async Task<int> GetReservedPaidDaysAsync(string employeeId, int year, int? excludeRequestId = null)
+    {
+        var leaves = await _db.LeaveRequests
+            .Where(l => l.EmployeeId == employeeId && l.Type == LeaveType.Paid &&
+                        (l.Status == RequestStatus.Approved || l.Status == RequestStatus.PendingManager) &&
+                        l.StartDate.Year == year && l.Id != excludeRequestId)
+            .ToListAsync();
+        return leaves.Sum(l => l.Days);
+    }
+
     public async Task<ServiceResult> CreateAsync(LeaveRequest request)
     {
         request.StartDate = request.StartDate.Date;
@@ -57,9 +68,10 @@ public class LeaveService : ILeaveService
 
         if (request.Type == LeaveType.Paid)
         {
-            int used = await GetUsedPaidDaysAsync(request.EmployeeId, request.StartDate.Year);
-            if (used + request.Days > AnnualPaidLeaveDays)
-                return ServiceResult.Fail($"Остават ви {AnnualPaidLeaveDays - used} дни платен отпуск за годината.");
+            // Чакащите заявки също се броят, за да не се надхвърли лимитът с няколко заявки наведнъж.
+            int reserved = await GetReservedPaidDaysAsync(request.EmployeeId, request.StartDate.Year);
+            if (reserved + request.Days > AnnualPaidLeaveDays)
+                return ServiceResult.Fail($"Остават ви {Math.Max(0, AnnualPaidLeaveDays - reserved)} дни платен отпуск за годината (с чакащите заявки).");
         }
 
         request.Status = RequestStatus.PendingManager;
@@ -75,6 +87,13 @@ public class LeaveService : ILeaveService
         if (request == null) return ServiceResult.Fail("Заявката не е намерена.");
         if (request.Status != RequestStatus.PendingManager)
             return ServiceResult.Fail("Заявката вече е обработена.");
+
+        if (approve && request.Type == LeaveType.Paid)
+        {
+            int used = await GetUsedPaidDaysAsync(request.EmployeeId, request.StartDate.Year);
+            if (used + request.Days > AnnualPaidLeaveDays)
+                return ServiceResult.Fail($"Служителят има само {Math.Max(0, AnnualPaidLeaveDays - used)} оставащи дни платен отпуск.");
+        }
 
         request.Status = approve ? RequestStatus.Approved : RequestStatus.Rejected;
         request.ReviewedById = managerId;

@@ -67,6 +67,6 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 // Създаване на базата и начални данни
-await DbSeeder.SeedAsync(app.Services);
+await DbSeeder.SeedAsync(app.Services, app.Environment.IsDevelopment(), app.Configuration);
 
 app.Run();
