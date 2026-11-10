@@ -1,0 +1,32 @@
+@model EmployeeIndexViewModel
+@{ ViewData["Title"] = "Служители"; }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Служители</h2>
+    <a asp-action="Create" class="btn btn-primary">+ Нов служител</a>
+</div>
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <select name="departmentId" asp-items="Model.Departments" class="form-select" onchange="this.form.submit()">
+            <option value="">Всички отдели</option>
+        </select>
+    </div>
+</form>
+<div class="card">
+    <table class="table mb-0 align-middle">
+        <thead><tr><th>Име</th><th>Имейл</th><th>Отдел</th><th>Длъжност</th><th>Роля</th><th>Статус</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var e in Model.Employees)
+            {
+                <tr class="@(e.IsActive ? "" : "text-muted")">
+                    <td><a asp-action="Details" asp-route-id="@e.Id">@e.FullName</a></td>
+                    <td>@e.Email</td>
+                    <td>@e.Department</td>
+                    <td>@e.Position</td>
+                    <td>@DisplayHelpers.RoleToBg(e.Role)</td>
+                    <td>@(e.IsActive ? "Активен" : "Неактивен")</td>
+                    <td class="text-end"><a asp-action="Edit" asp-route-id="@e.Id" class="btn btn-sm btn-outline-secondary">Редактирай</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

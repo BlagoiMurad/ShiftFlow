@@ -1,0 +1,27 @@
+@model List<Position>
+@{ ViewData["Title"] = "Длъжности"; }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Длъжности</h2>
+    <a asp-action="Create" class="btn btn-primary">+ Нова длъжност</a>
+</div>
+<div class="card">
+    <table class="table mb-0 align-middle">
+        <thead><tr><th>Длъжност</th><th>Часова ставка</th><th>Служители</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>@p.Name</td>
+                    <td>@p.HourlyRate.ToString("0.00") лв.</td>
+                    <td>@p.Employees.Count</td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary">Редактирай</a>
+                        <form asp-action="Delete" asp-route-id="@p.Id" method="post" class="d-inline" onsubmit="return confirm('Изтриване на длъжността?');">
+                            <button class="btn btn-sm btn-outline-danger">Изтрий</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

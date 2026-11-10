@@ -1,0 +1,27 @@
+@model EmployeeFormViewModel
+@{ var isNew = string.IsNullOrEmpty(Model.Id); ViewData["Title"] = isNew ? "Нов служител" : "Редакция на служител"; }
+<h2>@ViewData["Title"]</h2>
+<div class="card p-4 form-card">
+    <form asp-action="Save" method="post">
+        <partial name="_FormErrors" />
+        <input type="hidden" asp-for="Id" />
+        <div class="row">
+            <div class="col-md-6 mb-3"><label asp-for="FirstName" class="form-label"></label><input asp-for="FirstName" class="form-control" /><span asp-validation-for="FirstName" class="text-danger small"></span></div>
+            <div class="col-md-6 mb-3"><label asp-for="LastName" class="form-label"></label><input asp-for="LastName" class="form-control" /><span asp-validation-for="LastName" class="text-danger small"></span></div>
+            <div class="col-md-6 mb-3"><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control" /><span asp-validation-for="Email" class="text-danger small"></span></div>
+            <div class="col-md-6 mb-3"><label asp-for="PhoneNumber" class="form-label"></label><input asp-for="PhoneNumber" class="form-control" /><span asp-validation-for="PhoneNumber" class="text-danger small"></span></div>
+            <div class="col-md-6 mb-3"><label asp-for="DepartmentId" class="form-label"></label><select asp-for="DepartmentId" asp-items="Model.Departments" class="form-select"><option value="">—</option></select></div>
+            <div class="col-md-6 mb-3"><label asp-for="PositionId" class="form-label"></label><select asp-for="PositionId" asp-items="Model.Positions" class="form-select"><option value="">—</option></select></div>
+            <div class="col-md-4 mb-3"><label asp-for="Role" class="form-label"></label><select asp-for="Role" asp-items="Model.Roles" class="form-select"></select><span asp-validation-for="Role" class="text-danger small"></span></div>
+            <div class="col-md-4 mb-3"><label asp-for="HireDate" class="form-label"></label><input asp-for="HireDate" class="form-control" /></div>
+            <div class="col-md-4 mb-3"><label asp-for="WeeklyHours" class="form-label"></label><input asp-for="WeeklyHours" class="form-control" /><span asp-validation-for="WeeklyHours" class="text-danger small"></span></div>
+            @if (isNew)
+            {
+                <div class="col-md-6 mb-3"><label asp-for="Password" class="form-label"></label><input asp-for="Password" class="form-control" /><span asp-validation-for="Password" class="text-danger small"></span></div>
+            }
+        </div>
+        <button class="btn btn-primary">Запази</button>
+        <a asp-action="Index" class="btn btn-link">Назад</a>
+    </form>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

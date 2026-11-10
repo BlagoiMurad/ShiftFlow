@@ -1,0 +1,17 @@
+html { font-size: 15px; }
+body { background: #f5f7fb; }
+.card { border: none; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.stat-card .display-6 { font-weight: 600; }
+.schedule th, .schedule td { vertical-align: top; min-width: 110px; }
+.schedule td.today, .schedule th.today { background: #eef4ff; }
+.shift-chip { display: block; border-radius: 6px; padding: 3px 6px; margin-bottom: 4px; font-size: .85rem; text-decoration: none; color: #fff; background: #0d6efd; }
+.shift-chip.morning { background: #0d6efd; }
+.shift-chip.evening { background: #6f42c1; }
+.shift-chip.night { background: #212529; }
+.shift-chip.cancelled { background: #adb5bd; text-decoration: line-through; }
+.shift-chip.completed { background: #198754; }
+.leave-chip { display: block; border-radius: 6px; padding: 3px 6px; font-size: .85rem; background: #ffe69c; color: #664d03; }
+.add-shift { font-size: .8rem; text-decoration: none; opacity: .4; }
+.add-shift:hover { opacity: 1; }
+.clock-big { font-size: 2.5rem; font-weight: 600; }
+.form-card { max-width: 720px; }

@@ -1,0 +1,46 @@
+@model SwapRequestIndexViewModel
+@{ ViewData["Title"] = "Размени на смени"; }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Размени на смени</h2>
+    <a asp-action="Create" class="btn btn-primary">+ Нова заявка</a>
+</div>
+<div class="card">
+    <table class="table mb-0 align-middle">
+        <thead><tr><th>От</th><th>Към</th><th>Смяна</th><th>Срещу</th><th>Причина</th><th>Статус</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var r in Model.Requests)
+            {
+                var incoming = r.TargetEmployeeId == Model.CurrentUserId;
+                <tr class="@(incoming && r.Status == RequestStatus.PendingColleague ? "table-info" : "")">
+                    <td>@r.Requester.FullName</td>
+                    <td>@r.TargetEmployee.FullName</td>
+                    <td>@r.Shift.Start.ToString("dd.MM HH:mm")–@r.Shift.End.ToString("HH:mm")</td>
+                    <td>@(r.TargetShift != null ? r.TargetShift.Start.ToString("dd.MM HH:mm") + "–" + r.TargetShift.End.ToString("HH:mm") : "поемане")</td>
+                    <td>@r.Reason @if (!string.IsNullOrEmpty(r.ManagerComment)) { <div class="small text-muted">Управител: @r.ManagerComment</div> }</td>
+                    <td><span class="badge @r.Status.BadgeClass()">@r.Status.ToBg()</span></td>
+                    <td class="text-end text-nowrap">
+                        @if (incoming && r.Status == RequestStatus.PendingColleague)
+                        {
+                            <form asp-action="Respond" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@r.Id" /><input type="hidden" name="accept" value="true" />
+                                <button class="btn btn-sm btn-success">Приемам</button>
+                            </form>
+                            <form asp-action="Respond" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@r.Id" /><input type="hidden" name="accept" value="false" />
+                                <button class="btn btn-sm btn-outline-danger">Отказвам</button>
+                            </form>
+                        }
+                        @if (!incoming && (r.Status == RequestStatus.PendingColleague || r.Status == RequestStatus.PendingManager))
+                        {
+                            <form asp-action="Cancel" asp-route-id="@r.Id" method="post" class="d-inline">
+                                <button class="btn btn-sm btn-outline-secondary">Оттегли</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Requests.Any()) { <tr><td colspan="7" class="text-muted">Няма заявки за размяна.</td></tr> }
+        </tbody>
+    </table>
+</div>
+<p class="small text-muted mt-2">Как работи: изпращате заявка към колега → колегата приема → управител одобрява → графикът се обновява автоматично.</p>

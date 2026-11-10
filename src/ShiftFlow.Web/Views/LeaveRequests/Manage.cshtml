@@ -1,0 +1,45 @@
+@model LeaveManageViewModel
+@{ ViewData["Title"] = "Одобряване на отпуски"; }
+<h2>Заявки за отпуск</h2>
+<form method="get" class="mb-3">
+    <select name="status" class="form-select w-auto d-inline-block" onchange="this.form.submit()">
+        <option value="">Всички</option>
+        @foreach (var st in new[] { RequestStatus.PendingManager, RequestStatus.Approved, RequestStatus.Rejected, RequestStatus.Cancelled })
+        {
+            <option value="@st" selected="@(Model.Status == st)">@st.ToBg()</option>
+        }
+    </select>
+</form>
+<div class="card">
+    <table class="table mb-0 align-middle">
+        <thead><tr><th>Служител</th><th>Вид</th><th>Период</th><th>Дни</th><th>Причина</th><th>Статус</th><th style="width:320px"></th></tr></thead>
+        <tbody>
+            @foreach (var l in Model.Requests)
+            {
+                <tr>
+                    <td>@l.Employee.FullName<div class="small text-muted">@l.Employee.Department?.Name</div></td>
+                    <td>@l.Type.ToBg()</td>
+                    <td>@l.StartDate.ToString("dd.MM.yyyy") – @l.EndDate.ToString("dd.MM.yyyy")</td>
+                    <td>@l.Days</td>
+                    <td>@l.Reason</td>
+                    <td><span class="badge @l.Status.BadgeClass()">@l.Status.ToBg()</span>
+                        @if (l.ReviewedBy != null) { <div class="small text-muted">@l.ReviewedBy.FullName</div> }
+                    </td>
+                    <td>
+                        @if (l.Status == RequestStatus.PendingManager)
+                        {
+                            <form asp-action="Review" method="post" class="d-flex gap-1">
+                                <input type="hidden" name="Id" value="@l.Id" />
+                                <input name="Comment" class="form-control form-control-sm" placeholder="Коментар" />
+                                <button name="Approve" value="true" class="btn btn-sm btn-success">Одобри</button>
+                                <button name="Approve" value="false" class="btn btn-sm btn-outline-danger">Откажи</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Requests.Any()) { <tr><td colspan="7" class="text-muted">Няма заявки.</td></tr> }
+        </tbody>
+    </table>
+</div>
+<p class="small text-muted mt-2">При одобрение планираните смени на служителя в този период се отменят автоматично.</p>

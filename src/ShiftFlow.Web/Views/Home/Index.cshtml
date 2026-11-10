@@ -1,0 +1,122 @@
+@model DashboardViewModel
+@{ ViewData["Title"] = "Начало"; }
+<h2 class="mb-3">Здравей, @Model.FullName!</h2>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card p-3 h-100">
+            <div class="text-muted small">Работно време</div>
+            @if (Model.OpenEntry != null)
+            {
+                <div class="fs-5 my-2">На работа от <strong>@Model.OpenEntry.ClockIn.ToString("HH:mm")</strong></div>
+                <form asp-controller="TimeEntries" asp-action="ClockOut" method="post">
+                    <button class="btn btn-danger w-100">Отбележи изход</button>
+                </form>
+            }
+            else
+            {
+                <div class="fs-5 my-2">Не сте на смяна</div>
+                <form asp-controller="TimeEntries" asp-action="ClockIn" method="post">
+                    <button class="btn btn-success w-100">Отбележи вход</button>
+                </form>
+            }
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 h-100">
+            <div class="text-muted small">Тази седмица</div>
+            <div class="fs-5 my-2">@DisplayHelpers.Hours(Model.MyWeekWorkedHours) от @DisplayHelpers.Hours(Model.MyWeekPlannedHours)</div>
+            @{ var pct = Model.MyWeekPlannedHours > 0 ? Math.Min(100, Model.MyWeekWorkedHours / Model.MyWeekPlannedHours * 100) : 0; }
+            <div class="progress"><div class="progress-bar" style="width:@pct.ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></div></div>
+            <div class="small text-muted mt-2">отработени от планирани часове</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 h-100">
+            <div class="text-muted small">Платен отпуск</div>
+            <div class="fs-5 my-2">Остават @Model.PaidLeaveDaysLeft дни</div>
+            <a asp-controller="LeaveRequests" asp-action="Create" class="btn btn-outline-primary btn-sm">Заяви отпуск</a>
+        </div>
+    </div>
+</div>
+
+@if (Model.MyPendingColleagueRequests > 0)
+{
+    <div class="alert alert-info">
+        Имате <strong>@Model.MyPendingColleagueRequests</strong> заявка(и) за размяна, които чакат вашия отговор.
+        <a asp-controller="SwapRequests" asp-action="Index">Виж</a>
+    </div>
+}
+
+@if (Model.IsManager && Model.Stats != null)
+{
+    <h4 class="mt-4">Обобщение</h4>
+    <div class="row g-3 mb-4">
+        @{
+            var stats = new (string Label, int Value, string Ctrl, string Act)[]
+            {
+                ("Активни служители", Model.Stats.EmployeesCount, "Employees", "Index"),
+                ("Смени днес", Model.Stats.ShiftsToday, "Shifts", "Index"),
+                ("На работа в момента", Model.Stats.ClockedInNow, "TimeEntries", "Manage"),
+                ("В отпуск днес", Model.Stats.OnLeaveToday, "LeaveRequests", "Manage"),
+                ("Размени за одобрение", Model.Stats.PendingSwapRequests, "SwapRequests", "Manage"),
+                ("Отпуски за одобрение", Model.Stats.PendingLeaveRequests, "LeaveRequests", "Manage"),
+            };
+        }
+        @foreach (var s in stats)
+        {
+            <div class="col-6 col-md-4 col-lg-2">
+                <a asp-controller="@s.Ctrl" asp-action="@s.Act" class="text-decoration-none text-reset">
+                    <div class="card stat-card p-3 h-100 text-center">
+                        <div class="display-6">@s.Value</div>
+                        <div class="small text-muted">@s.Label</div>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+
+    <h4>Смени днес</h4>
+    <div class="card mb-4">
+        <table class="table mb-0">
+            <thead><tr><th>Служител</th><th>Отдел</th><th>Час</th><th>Статус</th></tr></thead>
+            <tbody>
+                @foreach (var s in Model.TodayShifts)
+                {
+                    <tr>
+                        <td>@s.Employee.FullName</td>
+                        <td>@s.Department.Name</td>
+                        <td>@s.Start.ToString("HH:mm") – @s.End.ToString("HH:mm")</td>
+                        <td><span class="badge @s.Status.BadgeClass()">@s.Status.ToBg()</span></td>
+                    </tr>
+                }
+                @if (!Model.TodayShifts.Any())
+                {
+                    <tr><td colspan="4" class="text-muted">Няма смени за днес.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<h4>Моите следващи смени</h4>
+<div class="card">
+    <table class="table mb-0">
+        <thead><tr><th>Ден</th><th>Час</th><th>Отдел</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var s in Model.MyUpcomingShifts)
+            {
+                <tr>
+                    <td>@DisplayHelpers.DayName(s.Start), @s.Start.ToString("dd.MM")</td>
+                    <td>@s.Start.ToString("HH:mm") – @s.End.ToString("HH:mm")</td>
+                    <td>@s.Department.Name</td>
+                    <td class="text-end"><a asp-controller="SwapRequests" asp-action="Create" asp-route-shiftId="@s.Id" class="btn btn-sm btn-outline-secondary">Поискай размяна</a></td>
+                </tr>
+            }
+            @if (!Model.MyUpcomingShifts.Any())
+            {
+                <tr><td colspan="4" class="text-muted">Нямате планирани смени през следващите две седмици.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>

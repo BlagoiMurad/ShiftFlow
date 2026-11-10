@@ -1,0 +1,22 @@
+@model LeaveRequestFormViewModel
+@{ ViewData["Title"] = "Заявка за отпуск"; }
+<h2>Заявка за отпуск</h2>
+<p class="text-muted">Оставащ платен отпуск: <strong>@Model.PaidDaysLeft дни</strong></p>
+<div class="card p-4 form-card">
+    <form asp-action="Create" method="post">
+        <partial name="_FormErrors" />
+        <div class="row">
+            <div class="col-md-4 mb-3"><label asp-for="Type" class="form-label"></label>
+                <select asp-for="Type" class="form-select">
+                    @foreach (LeaveType t in Enum.GetValues<LeaveType>()) { <option value="@t">@t.ToBg()</option> }
+                </select>
+            </div>
+            <div class="col-md-4 mb-3"><label asp-for="StartDate" class="form-label"></label><input asp-for="StartDate" class="form-control" /></div>
+            <div class="col-md-4 mb-3"><label asp-for="EndDate" class="form-label"></label><input asp-for="EndDate" class="form-control" /></div>
+            <div class="col-12 mb-3"><label asp-for="Reason" class="form-label"></label><textarea asp-for="Reason" class="form-control" rows="2"></textarea></div>
+        </div>
+        <button class="btn btn-primary">Изпрати</button>
+        <a asp-action="Index" class="btn btn-link">Назад</a>
+    </form>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

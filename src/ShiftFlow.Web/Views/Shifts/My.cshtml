@@ -1,0 +1,45 @@
+@model MyShiftsViewModel
+@{ ViewData["Title"] = "Моите смени"; }
+<h2>Моите смени</h2>
+<h5 class="mt-3">Предстоящи</h5>
+<div class="card mb-4">
+    <table class="table mb-0 align-middle">
+        <thead><tr><th>Ден</th><th>Час</th><th>Отдел</th><th>Часове</th><th>Статус</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var s in Model.Upcoming)
+            {
+                <tr>
+                    <td>@DisplayHelpers.DayName(s.Start), @s.Start.ToString("dd.MM.yyyy")</td>
+                    <td>@s.Start.ToString("HH:mm") – @s.End.ToString("HH:mm")</td>
+                    <td>@s.Department.Name</td>
+                    <td>@DisplayHelpers.Hours(s.PlannedHours)</td>
+                    <td><span class="badge @s.Status.BadgeClass()">@s.Status.ToBg()</span></td>
+                    <td class="text-end">
+                        @if (s.Status == ShiftStatus.Planned && s.Start > DateTime.Now)
+                        {
+                            <a asp-controller="SwapRequests" asp-action="Create" asp-route-shiftId="@s.Id" class="btn btn-sm btn-outline-secondary">Поискай размяна</a>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Upcoming.Any()) { <tr><td colspan="6" class="text-muted">Нямате предстоящи смени.</td></tr> }
+        </tbody>
+    </table>
+</div>
+<h5>Последните 30 дни</h5>
+<div class="card">
+    <table class="table mb-0">
+        <thead><tr><th>Ден</th><th>Час</th><th>Отдел</th><th>Статус</th></tr></thead>
+        <tbody>
+            @foreach (var s in Model.Past)
+            {
+                <tr>
+                    <td>@DisplayHelpers.DayName(s.Start), @s.Start.ToString("dd.MM.yyyy")</td>
+                    <td>@s.Start.ToString("HH:mm") – @s.End.ToString("HH:mm")</td>
+                    <td>@s.Department.Name</td>
+                    <td><span class="badge @s.Status.BadgeClass()">@s.Status.ToBg()</span></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

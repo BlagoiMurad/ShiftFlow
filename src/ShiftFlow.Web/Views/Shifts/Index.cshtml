@@ -1,0 +1,99 @@
+@model WeekScheduleViewModel
+@{
+    ViewData["Title"] = "График";
+    string ChipClass(Shift s) => s.Status switch
+    {
+        ShiftStatus.Cancelled => "cancelled",
+        ShiftStatus.Completed => "completed",
+        _ => s.Start.Hour < 12 ? "morning" : s.Start.Hour < 20 ? "evening" : "night"
+    };
+}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h2 class="mb-0">График: @Model.WeekStart.ToString("dd.MM") – @Model.WeekStart.AddDays(6).ToString("dd.MM.yyyy")</h2>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" asp-route-week="@Model.WeekStart.AddDays(-7).ToString("yyyy-MM-dd")" asp-route-departmentId="@Model.DepartmentId">‹ Предишна</a>
+        <a class="btn btn-outline-secondary" asp-route-departmentId="@Model.DepartmentId">Тази седмица</a>
+        <a class="btn btn-outline-secondary" asp-route-week="@Model.WeekStart.AddDays(7).ToString("yyyy-MM-dd")" asp-route-departmentId="@Model.DepartmentId">Следваща ›</a>
+    </div>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <form method="get" class="d-flex gap-2">
+        <input type="hidden" name="week" value="@Model.WeekStart.ToString("yyyy-MM-dd")" />
+        <select name="departmentId" asp-items="Model.Departments" class="form-select" onchange="this.form.submit()">
+            <option value="">Всички отдели</option>
+        </select>
+    </form>
+    @if (Model.CanEdit)
+    {
+        <a asp-action="Create" asp-route-date="@Model.WeekStart.ToString("yyyy-MM-dd")" asp-route-departmentId="@Model.DepartmentId" class="btn btn-primary">+ Нова смяна</a>
+        <form asp-action="CopyWeek" method="post" onsubmit="return confirm('Да копирам смените от тази седмица в следващата?');">
+            <input type="hidden" name="week" value="@Model.WeekStart.ToString("yyyy-MM-dd")" />
+            <input type="hidden" name="departmentId" value="@Model.DepartmentId" />
+            <button class="btn btn-outline-primary">Копирай в следващата седмица</button>
+        </form>
+    }
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-bordered mb-0 schedule">
+            <thead class="table-light">
+                <tr>
+                    <th>Служител</th>
+                    @foreach (var d in Model.Days)
+                    {
+                        <th class="@(d == DateTime.Today ? "today" : "")">@DisplayHelpers.DayName(d)<br /><span class="small text-muted">@d.ToString("dd.MM")</span></th>
+                    }
+                    <th>Часове</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var e in Model.Employees)
+                {
+                    var total = Model.TotalHours(e.Id);
+                    <tr>
+                        <td><strong>@e.FullName</strong><br /><span class="small text-muted">@e.Position?.Name</span></td>
+                        @foreach (var d in Model.Days)
+                        {
+                            <td class="@(d == DateTime.Today ? "today" : "")">
+                                @if (Model.IsOnLeave(e.Id, d))
+                                {
+                                    <span class="leave-chip">В отпуск</span>
+                                }
+                                @foreach (var s in Model.ShiftsFor(e.Id, d))
+                                {
+                                    if (Model.CanEdit)
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@s.Id" class="shift-chip @ChipClass(s)" title="@s.Notes">@s.Start.ToString("HH:mm")–@s.End.ToString("HH:mm")</a>
+                                    }
+                                    else
+                                    {
+                                        <span class="shift-chip @ChipClass(s)" title="@s.Notes">@s.Start.ToString("HH:mm")–@s.End.ToString("HH:mm")</span>
+                                    }
+                                }
+                                @if (Model.CanEdit && !Model.IsOnLeave(e.Id, d))
+                                {
+                                    <a asp-action="Create" asp-route-date="@d.ToString("yyyy-MM-dd")" asp-route-employeeId="@e.Id" asp-route-departmentId="@(Model.DepartmentId ?? e.DepartmentId)" class="add-shift">+ добави</a>
+                                }
+                            </td>
+                        }
+                        <td class="@(total > e.WeeklyHours ? "text-danger fw-bold" : "")">@DisplayHelpers.Hours(total)<br /><span class="small text-muted">от @e.WeeklyHours</span></td>
+                    </tr>
+                }
+                @if (!Model.Employees.Any())
+                {
+                    <tr><td colspan="9" class="text-muted">Няма служители в този отдел.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="small text-muted mt-2">
+    <span class="shift-chip morning d-inline-block">Сутрешна</span>
+    <span class="shift-chip evening d-inline-block">Следобедна</span>
+    <span class="shift-chip night d-inline-block">Нощна</span>
+    <span class="shift-chip completed d-inline-block">Отработена</span>
+    <span class="shift-chip cancelled d-inline-block">Отменена</span>
+    · Червено: часовете надвишават договорените.
+</div>
