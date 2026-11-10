@@ -1,0 +1,41 @@
+@model TimeManageViewModel
+@{ ViewData["Title"] = "Отчетено време"; }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Отчетено време</h2>
+    <a asp-action="Create" asp-route-employeeId="@Model.EmployeeId" class="btn btn-primary">+ Ръчен запис</a>
+</div>
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-md-2"><label class="form-label small">От</label><input type="date" name="from" value="@Model.From.ToString("yyyy-MM-dd")" class="form-control" /></div>
+    <div class="col-md-2"><label class="form-label small">До</label><input type="date" name="to" value="@Model.To.ToString("yyyy-MM-dd")" class="form-control" /></div>
+    <div class="col-md-3"><label class="form-label small">Отдел</label><select name="departmentId" asp-items="Model.Departments" class="form-select"><option value="">Всички</option></select></div>
+    <div class="col-md-3"><label class="form-label small">Служител</label><select name="employeeId" asp-items="Model.Employees" class="form-select"><option value="">Всички</option></select></div>
+    <div class="col-md-2"><button class="btn btn-outline-primary w-100">Филтрирай</button></div>
+</form>
+<div class="card">
+    <table class="table mb-0 align-middle">
+        <thead><tr><th>Служител</th><th>Дата</th><th>Смяна</th><th>Вход</th><th>Изход</th><th>Часове</th><th>Бележка</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var e in Model.Entries)
+            {
+                var late = e.Shift != null && e.ClockIn > e.Shift.Start.AddMinutes(5);
+                <tr>
+                    <td>@e.Employee.FullName</td>
+                    <td>@e.ClockIn.ToString("dd.MM.yyyy")</td>
+                    <td>@(e.Shift != null ? e.Shift.Start.ToString("HH:mm") + "–" + e.Shift.End.ToString("HH:mm") : "—")</td>
+                    <td class="@(late ? "text-danger" : "")">@e.ClockIn.ToString("HH:mm")</td>
+                    <td>@(e.ClockOut?.ToString("HH:mm") ?? "на работа")</td>
+                    <td>@DisplayHelpers.Hours(e.WorkedHours)</td>
+                    <td>@e.Note @if (e.IsManualCorrection) { <span class="badge bg-info text-dark">коригиран</span> }</td>
+                    <td class="text-end text-nowrap">
+                        <a asp-action="Edit" asp-route-id="@e.Id" class="btn btn-sm btn-outline-secondary">Коригирай</a>
+                        <form asp-action="Delete" asp-route-id="@e.Id" method="post" class="d-inline" onsubmit="return confirm('Изтриване на записа?');">
+                            <button class="btn btn-sm btn-outline-danger">Изтрий</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Entries.Any()) { <tr><td colspan="8" class="text-muted">Няма записи.</td></tr> }
+        </tbody>
+        <tfoot><tr><th colspan="5">Общо</th><th colspan="3">@DisplayHelpers.Hours(Model.Entries.Sum(e => e.WorkedHours))</th></tr></tfoot>
+    </table>
+</div>

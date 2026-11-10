@@ -1,0 +1,6 @@
+@model ErrorViewModel
+@{ ViewData["Title"] = "Грешка"; }
+<div class="alert alert-danger mt-4">
+    <h4>Възникна грешка при обработката на заявката.</h4>
+    @if (Model?.ShowRequestId == true) { <p class="mb-0 small">Код на заявката: <code>@Model.RequestId</code></p> }
+</div>

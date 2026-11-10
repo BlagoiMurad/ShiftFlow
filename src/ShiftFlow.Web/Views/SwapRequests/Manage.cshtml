@@ -1,0 +1,38 @@
+@model List<ShiftSwapRequest>
+@{ ViewData["Title"] = "Одобряване на размени"; bool showAll = ViewBag.ShowAll; }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>@(showAll ? "Всички размени" : "Размени за одобрение")</h2>
+    <a asp-action="Manage" asp-route-all="@(!showAll)" class="btn btn-outline-secondary">@(showAll ? "Само чакащите" : "Покажи всички")</a>
+</div>
+<div class="card">
+    <table class="table mb-0 align-middle">
+        <thead><tr><th>Заявител</th><th>Смяна</th><th>Колега</th><th>Срещу смяна</th><th>Причина</th><th>Статус</th><th style="width:320px"></th></tr></thead>
+        <tbody>
+            @foreach (var r in Model)
+            {
+                <tr>
+                    <td>@r.Requester.FullName</td>
+                    <td>@r.Shift.Start.ToString("dd.MM HH:mm")–@r.Shift.End.ToString("HH:mm")<div class="small text-muted">@r.Shift.Department.Name</div></td>
+                    <td>@r.TargetEmployee.FullName</td>
+                    <td>@(r.TargetShift != null ? r.TargetShift.Start.ToString("dd.MM HH:mm") + "–" + r.TargetShift.End.ToString("HH:mm") : "поемане")</td>
+                    <td>@r.Reason</td>
+                    <td><span class="badge @r.Status.BadgeClass()">@r.Status.ToBg()</span>
+                        @if (r.ReviewedBy != null) { <div class="small text-muted">@r.ReviewedBy.FullName, @r.ReviewedAt?.ToString("dd.MM HH:mm")</div> }
+                    </td>
+                    <td>
+                        @if (r.Status == RequestStatus.PendingManager)
+                        {
+                            <form asp-action="Review" method="post" class="d-flex gap-1">
+                                <input type="hidden" name="Id" value="@r.Id" />
+                                <input name="Comment" class="form-control form-control-sm" placeholder="Коментар" />
+                                <button name="Approve" value="true" class="btn btn-sm btn-success">Одобри</button>
+                                <button name="Approve" value="false" class="btn btn-sm btn-outline-danger">Откажи</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any()) { <tr><td colspan="7" class="text-muted">Няма заявки.</td></tr> }
+        </tbody>
+    </table>
+</div>

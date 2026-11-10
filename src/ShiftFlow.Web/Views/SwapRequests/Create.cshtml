@@ -1,0 +1,41 @@
+@model SwapRequestFormViewModel
+@{ ViewData["Title"] = "Заявка за размяна"; }
+<h2>Заявка за размяна на смяна</h2>
+<div class="card p-4 form-card">
+    <form asp-action="Create" method="post">
+        <partial name="_FormErrors" />
+        <div class="mb-3"><label asp-for="ShiftId" class="form-label"></label><select asp-for="ShiftId" asp-items="Model.MyShifts" class="form-select"><option value="">— изберете —</option></select><span asp-validation-for="ShiftId" class="text-danger small"></span></div>
+        <div class="mb-3"><label asp-for="TargetEmployeeId" class="form-label"></label><select asp-for="TargetEmployeeId" asp-items="Model.Colleagues" class="form-select"><option value="">— изберете —</option></select><span asp-validation-for="TargetEmployeeId" class="text-danger small"></span></div>
+        <div class="mb-3">
+            <label asp-for="TargetShiftId" class="form-label"></label>
+            <select asp-for="TargetShiftId" class="form-select">
+                <option value="">Без размяна: колегата поема моята смяна</option>
+                @foreach (var s in Model.ColleagueShifts)
+                {
+                    <option value="@s.Id" data-employee="@s.EmployeeId" selected="@(Model.TargetShiftId == s.Id)">@s.Start.ToString("dd.MM (ddd) HH:mm")–@s.End.ToString("HH:mm")</option>
+                }
+            </select>
+        </div>
+        <div class="mb-3"><label asp-for="Reason" class="form-label"></label><textarea asp-for="Reason" class="form-control" rows="2"></textarea></div>
+        <button class="btn btn-primary">Изпрати</button>
+        <a asp-action="Index" class="btn btn-link">Назад</a>
+    </form>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Показва само смените на избрания колега.
+        const colleague = document.getElementById('TargetEmployeeId');
+        const target = document.getElementById('TargetShiftId');
+        function filterShifts() {
+            for (const opt of target.options) {
+                if (!opt.dataset.employee) continue;
+                const show = opt.dataset.employee === colleague.value;
+                opt.hidden = !show;
+                if (!show && opt.selected) target.value = '';
+            }
+        }
+        colleague.addEventListener('change', filterShifts);
+        filterShifts();
+    </script>
+}

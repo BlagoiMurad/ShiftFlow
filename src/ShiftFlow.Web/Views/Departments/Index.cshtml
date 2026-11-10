@@ -1,0 +1,31 @@
+@model List<Department>
+@{ ViewData["Title"] = "Отдели"; }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Отдели</h2>
+    @if (User.IsInRole("Admin")) { <a asp-action="Create" class="btn btn-primary">+ Нов отдел</a> }
+</div>
+<div class="card">
+    <table class="table mb-0 align-middle">
+        <thead><tr><th>Име</th><th>Описание</th><th>Служители</th><th>Мин. на смяна</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var d in Model)
+            {
+                <tr>
+                    <td><a asp-controller="Shifts" asp-action="Index" asp-route-departmentId="@d.Id">@d.Name</a></td>
+                    <td>@d.Description</td>
+                    <td><a asp-controller="Employees" asp-action="Index" asp-route-departmentId="@d.Id">@d.Employees.Count</a></td>
+                    <td>@d.MinStaffPerShift</td>
+                    <td class="text-end">
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a asp-action="Edit" asp-route-id="@d.Id" class="btn btn-sm btn-outline-secondary">Редактирай</a>
+                            <form asp-action="Delete" asp-route-id="@d.Id" method="post" class="d-inline" onsubmit="return confirm('Изтриване на отдела?');">
+                                <button class="btn btn-sm btn-outline-danger">Изтрий</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

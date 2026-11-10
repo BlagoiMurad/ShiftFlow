@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ShiftFlow</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">⏱ ShiftFlow</a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="mainNav">
+                        <ul class="navbar-nav me-auto">
+                            <li class="nav-item"><a class="nav-link" asp-controller="Shifts" asp-action="Index">График</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Shifts" asp-action="My">Моите смени</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="TimeEntries" asp-action="Index">Работно време</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="SwapRequests" asp-action="Index">Размени</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="LeaveRequests" asp-action="Index">Отпуски</a></li>
+                            @if (User.IsManager())
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Управление</a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" asp-controller="SwapRequests" asp-action="Manage">Одобряване на размени</a></li>
+                                        <li><a class="dropdown-item" asp-controller="LeaveRequests" asp-action="Manage">Одобряване на отпуски</a></li>
+                                        <li><a class="dropdown-item" asp-controller="TimeEntries" asp-action="Manage">Отчетено време</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Reports" asp-action="Index">Справки</a></li>
+                                        <li><hr class="dropdown-divider" /></li>
+                                        <li><a class="dropdown-item" asp-controller="Employees" asp-action="Index">Служители</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Departments" asp-action="Index">Отдели</a></li>
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <li><a class="dropdown-item" asp-controller="Positions" asp-action="Index">Длъжности</a></li>
+                                        }
+                                    </ul>
+                                </li>
+                            }
+                        </ul>
+                        <ul class="navbar-nav">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">@User.Identity?.Name</a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="ChangePassword">Смяна на парола</a></li>
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post">
+                                            <button type="submit" class="dropdown-item">Изход</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                }
+            </div>
+        </nav>
+    </header>
+    <div class="container-xl">
+        <main role="main" class="pb-4">
+            @if (TempData["Success"] is string ok)
+            {
+                <div class="alert alert-success alert-dismissible fade show">@ok<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+            }
+            @if (TempData["Error"] is string err)
+            {
+                <div class="alert alert-danger alert-dismissible fade show">@err<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+            }
+            @RenderBody()
+        </main>
+    </div>
+    <footer class="border-top text-muted py-3 mt-4">
+        <div class="container-xl small">ShiftFlow · Система за планиране на работни смени и отчитане на работното време</div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

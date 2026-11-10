@@ -1,0 +1,19 @@
+@model TimeEntryFormViewModel
+@{ ViewData["Title"] = Model.Id == 0 ? "Ръчен запис" : "Корекция на запис"; }
+<h2>@ViewData["Title"]</h2>
+<div class="card p-4 form-card">
+    <form asp-action="Save" method="post">
+        <partial name="_FormErrors" />
+        <input type="hidden" asp-for="Id" />
+        <div class="mb-3"><label asp-for="EmployeeId" class="form-label"></label><select asp-for="EmployeeId" asp-items="Model.Employees" class="form-select"><option value="">— изберете —</option></select><span asp-validation-for="EmployeeId" class="text-danger small"></span></div>
+        <div class="row">
+            <div class="col-md-6 mb-3"><label asp-for="ClockIn" class="form-label"></label><input asp-for="ClockIn" type="datetime-local" class="form-control" /></div>
+            <div class="col-md-6 mb-3"><label asp-for="ClockOut" class="form-label"></label><input asp-for="ClockOut" type="datetime-local" class="form-control" /></div>
+        </div>
+        <div class="mb-3"><label asp-for="ShiftId" class="form-label"></label><select asp-for="ShiftId" asp-items="Model.Shifts" class="form-select"><option value="">Без смяна</option></select></div>
+        <div class="mb-3"><label asp-for="Note" class="form-label"></label><input asp-for="Note" class="form-control" /><span asp-validation-for="Note" class="text-danger small"></span></div>
+        <button class="btn btn-primary">Запази</button>
+        <a asp-action="Manage" class="btn btn-link">Назад</a>
+    </form>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

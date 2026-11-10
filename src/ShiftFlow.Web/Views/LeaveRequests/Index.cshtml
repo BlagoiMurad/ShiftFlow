@@ -1,0 +1,34 @@
+@model LeaveIndexViewModel
+@{ ViewData["Title"] = "Моите отпуски"; }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Моите отпуски</h2>
+    <a asp-action="Create" class="btn btn-primary">+ Заяви отпуск</a>
+</div>
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="card p-3 text-center"><div class="display-6">@Model.PaidDaysUsed</div><div class="small text-muted">използвани дни платен отпуск</div></div></div>
+    <div class="col-md-3"><div class="card p-3 text-center"><div class="display-6">@Model.PaidDaysLeft</div><div class="small text-muted">оставащи дни за @DateTime.Today.Year</div></div></div>
+</div>
+<div class="card">
+    <table class="table mb-0 align-middle">
+        <thead><tr><th>Вид</th><th>Период</th><th>Дни</th><th>Причина</th><th>Статус</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var l in Model.Requests)
+            {
+                <tr>
+                    <td>@l.Type.ToBg()</td>
+                    <td>@l.StartDate.ToString("dd.MM.yyyy") – @l.EndDate.ToString("dd.MM.yyyy")</td>
+                    <td>@l.Days</td>
+                    <td>@l.Reason @if (!string.IsNullOrEmpty(l.ManagerComment)) { <div class="small text-muted">Управител: @l.ManagerComment</div> }</td>
+                    <td><span class="badge @l.Status.BadgeClass()">@l.Status.ToBg()</span></td>
+                    <td class="text-end">
+                        @if (l.Status == RequestStatus.PendingManager)
+                        {
+                            <form asp-action="Cancel" asp-route-id="@l.Id" method="post"><button class="btn btn-sm btn-outline-secondary">Оттегли</button></form>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Requests.Any()) { <tr><td colspan="6" class="text-muted">Нямате заявки за отпуск.</td></tr> }
+        </tbody>
+    </table>
+</div>
